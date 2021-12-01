@@ -16,6 +16,7 @@ def created(numFolder, client_socket):
         path = os.path.join(sys.argv[0], numFolder)
         os.mkdir(os.path.join(path, dir_name))
         print("copied folder")
+
     else:
         size = client_socket.recv(4)
         file_name = client_socket.recv(int.from_bytes(size))
