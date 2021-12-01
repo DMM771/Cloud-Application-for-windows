@@ -11,14 +11,16 @@ myId = b''
 
 
 def on_created(event):
-    print("a file has been createdddddddddddddddddddd")
+    print("a file has been created")
+    print('the change happened in ' + event.src_path)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((sys.argv[1], int(sys.argv[2])))
     sock.send(b'upd')
-    sock.send(myId.encode())
+    sock.send(myId)
     sock.send(len('created').to_bytes(4, 'big'))
     sock.send('created'.encode())
-    updated_path = os.path.relpath(sys.argv[3], event.src_path)
+    updated_path = os.path.relpath(event.src_path,sys.argv[3])
+    print(updated_path)
     if event.is_directory:
         sock.send(len('directory').to_bytes(4, 'big'))
         sock.send('directory'.encode())
@@ -42,15 +44,15 @@ def on_created(event):
 
 
 def on_deleted(event):
-    print("a file has been deleteddddddddddddddddddddd")
+    print("a file has been deleted")
 
 
 def on_modified(event):
-    print("a file has been deleteddddddddddddddddddddd")
+    print("i detect a modification, dont do anything")
 
 
 def on_moved(event):
-    print("a file has been deleteddddddddddddddddddddd")
+    print("a file has been moved")
 
 
 if __name__ == "__main__":
@@ -78,9 +80,9 @@ if __name__ == "__main__":
     observer = Observer()
     observer.schedule(event_handler, path, recursive=True)
     event_handler.on_created = on_created
-    event_handler.on_deleted = on_created
-    event_handler.on_modified = on_created
-    event_handler.on_moved = on_created
+    event_handler.on_modified = on_modified
+    event_handler.on_deleted = on_deleted
+    event_handler.on_moved = on_moved
     observer.start()
 
     try:
