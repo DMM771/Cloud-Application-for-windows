@@ -7,11 +7,53 @@ import logging
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 
+myId = b''
 
+
+def on_created(event):
+    print("a file has been createdddddddddddddddddddd")
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((sys.argv[1], int(sys.argv[2])))
+    sock.send(b'upd')
+    sock.send(myId.encode())
+    sock.send(len('created').to_bytes(4, 'big'))
+    sock.send('created'.encode())
+    updated_path = os.path.relpath(sys.argv[3], event.src_path)
+    if event.is_directory:
+        sock.send(len('directory').to_bytes(4, 'big'))
+        sock.send('directory'.encode())
+        sock.send(len(updated_path).to_bytes(4, 'big'))
+        sock.send(updated_path.encode())
+    else:
+        sock.send(len('file').to_bytes(4, 'big'))
+        sock.send('file'.encode())
+        sock.send(len(updated_path).to_bytes(4, 'big'))
+        sock.send(updated_path.encode())
+        file_size = os.path.getsize(event.src_path)
+        sock.send(file_size.to_bytes(4, 'big'))
+        f = open(event.src_path, 'rb')
+        # Send the file in chunks so large files can be handled.
+        while True:
+            data = f.read(1_000_000)
+            if not data:
+                break
+            sock.send(data)
+        f.close()
+
+
+def on_deleted(event):
+    print("a file has been deleteddddddddddddddddddddd")
+
+
+def on_modified(event):
+    print("a file has been deleteddddddddddddddddddddd")
+
+
+def on_moved(event):
+    print("a file has been deleteddddddddddddddddddddd")
 
 
 if __name__ == "__main__":
-    #print(sys.argv[5])
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((sys.argv[1], int(sys.argv[2])))
     if len(sys.argv) == 6:
@@ -27,23 +69,23 @@ if __name__ == "__main__":
         util.sendFolder(s, sys.argv[3])
     s.close()
 
-#     logging.basicConfig(level=logging.INFO,
-#                         format='%(asctime)s - %(message)s',
-#                         datefmt='%Y-%m-%d %H:%M:%S')
-#
-#     path = sys.argv[1] if len(sys.argv) > 1 else '.'
-#     event_handler = LoggingEventHandler()
-#     observer = Observer()
-#     observer.schedule(event_handler, path, recursive=True)
-#     observer.start()
-#
-#     try:
-#         while True:
-#             time.sleep(1)
-#     finally:
-#         observer.stop()
-#         observer.join()
-#
-# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# s.connect(('10.0.0.11', 12345))
-# s.close()
+    logging.basicConfig(level=logging.INFO,
+                        format='%(asctime)s - %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
+
+    path = sys.argv[3]
+    event_handler = LoggingEventHandler()
+    observer = Observer()
+    observer.schedule(event_handler, path, recursive=True)
+    event_handler.on_created = on_created
+    event_handler.on_deleted = on_created
+    event_handler.on_modified = on_created
+    event_handler.on_moved = on_created
+    observer.start()
+
+    try:
+        while True:
+            time.sleep(1)
+    finally:
+        observer.stop()
+        observer.join()

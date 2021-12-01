@@ -1,6 +1,7 @@
 import os
 import sys
 
+
 def getFolder(sock, dir):
     print("in getFolder")
     size = sock.recv(4)
@@ -32,10 +33,11 @@ def getFolder(sock, dir):
         size = sock.recv(4)
         info = sock.recv(int.from_bytes(size, 'big'))
 
-def sendFolder(sock,dir):
+
+def sendFolder(sock, dir):
     for path, dirs, files in os.walk(dir):
         for di in dirs:
-            pathD=os.path.join(path,di)
+            pathD = os.path.join(path, di)
             relPath = os.path.relpath(pathD, dir)
             print(f'Sending {relPath}')
             sock.send((3).to_bytes(4, 'big'))
