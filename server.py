@@ -3,35 +3,45 @@ import socket
 import random
 import string
 import sys
-
 import util
 
 
 def created(numFolder, client_socket):
     size = client_socket.recv(4)
-    type = client_socket.recv(int.from_bytes(size))
+    type = client_socket.recv(int.from_bytes(size, 'big'))
     if type == b'directory':
         size = client_socket.recv(4)
-        dir_name = client_socket.recv(int.from_bytes(size))
-        path = os.path.join(sys.argv[0], numFolder)
-        os.mkdir(os.path.join(path, dir_name))
-        print("copied folder")
-
+        dir_name = client_socket.recv(int.from_bytes(size, 'big'))
+        path = os.path.join(os.getcwd(), str(numFolder))
+        print(os.path.join(path, dir_name.decode()))
+        if not os.path.isdir(os.path.join(path, dir_name.decode())):
+            os.makedirs(os.path.join(path, dir_name.decode()))
+            print("copied folder")
     else:
         size = client_socket.recv(4)
-        file_name = client_socket.recv(int.from_bytes(size))
-        path = os.path.join(sys.argv[0], numFolder)
+        file_name = client_socket.recv(int.from_bytes(size, 'big'))
+        path = os.path.join(os.getcwd(), str(numFolder))
         file_size = client_socket.recv(4)
-        f = open(os.path.join(path, file_name), 'wb')
+        f = open(os.path.join(path, file_name.decode()), 'wb')
+        file_size = int.from_bytes(file_size, 'big')
         while file_size > 0:
-            info = client_socket.recv(min(1000000, size))
+            info = client_socket.recv(min(1000000, file_size))
             f.write(info)
-            size -= len(info)
+            file_size -= len(info)
         f.close()
 
 
-
-
+def moved(num_folder, client_socket):
+    size = client_socket.recv(4)
+    dir_name = client_socket.recv(int.from_bytes(size, 'big'))
+    src_path = os.path.join(os.getcwd(), str(num_folder))
+    dst_path = src_path
+    src_path = os.path.join(src_path, dir_name.decode())
+    size = client_socket.recv(4)
+    dir_name = client_socket.recv(int.from_bytes(size, 'big'))
+    dst_path = os.path.join(dst_path, dir_name.decode())
+    if os.path.isdir(src_path):
+        os.renames(src_path, dst_path)
 
 
 if __name__ == '__main__':
@@ -60,10 +70,12 @@ if __name__ == '__main__':
             print(dirName)
             util.getFolder(client_socket, dirName)
         elif data == b'upd':
-            numFolder = client_socket.recv(128)
+            data = client_socket.recv(128)
+            numFolder = dic[data.decode()]
             size = client_socket.recv(4)
-            upd_type = client_socket.recv(int.from_bytes(size))
+            upd_type = client_socket.recv(int.from_bytes(size, 'big'))
             if upd_type == b'created':
                 created(numFolder, client_socket)
-
+            elif upd_type == b'renamed':
+                moved(numFolder, client_socket)
         client_socket.close()
