@@ -6,7 +6,6 @@ import time
 import logging
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
-
 myId = b''
 
 
@@ -19,7 +18,7 @@ def on_created(event):
     sock.send(myId)
     sock.send(len('created').to_bytes(4, 'big'))
     sock.send('created'.encode())
-    updated_path = os.path.relpath(event.src_path,sys.argv[3])
+    updated_path = os.path.relpath(event.src_path, sys.argv[3])
     print(updated_path)
     if event.is_directory:
         sock.send(len('directory').to_bytes(4, 'big'))
@@ -48,12 +47,32 @@ def on_deleted(event):
 
 
 def on_modified(event):
-    print("i detect a modification, dont do anything")
+    if not event.is_directory:
+        on_created(event)
+    else:
+        print("dir, do nothing")
 
 
 def on_moved(event):
-    print("a file has been moved")
-
+    if event.is_directory:
+        print("a dir has been renamed")
+        print('the change happened in ' + event.src_path)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((sys.argv[1], int(sys.argv[2])))
+        sock.send(b'upd')
+        sock.send(myId)
+        sock.send(len('renamed').to_bytes(4, 'big'))
+        sock.send('renamed'.encode())
+        updated_path = os.path.relpath(event.src_path, sys.argv[3])
+        print(updated_path)
+        sock.send(len(updated_path).to_bytes(4, 'big'))
+        sock.send(updated_path.encode())
+        updated_path = os.path.relpath(event.dest_path, sys.argv[3])
+        print(updated_path)
+        sock.send(len(updated_path).to_bytes(4, 'big'))
+        sock.send(updated_path.encode())
+    else:
+        print("rename dir file dont change")
 
 if __name__ == "__main__":
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
