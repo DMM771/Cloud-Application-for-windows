@@ -3,7 +3,6 @@ import socket
 import random
 import string
 import sys
-
 import util
 
 
@@ -15,9 +14,9 @@ def created(numFolder, client_socket):
         dir_name = client_socket.recv(int.from_bytes(size, 'big'))
         path = os.path.join(os.getcwd(), str(numFolder))
         print(os.path.join(path, dir_name.decode()))
-        os.mkdir(os.path.join(path, dir_name.decode()))
-        print("copied folder")
-
+        if not os.path.isdir(os.path.join(path, dir_name.decode())):
+            os.makedirs(os.path.join(path, dir_name.decode()))
+            print("copied folder")
     else:
         size = client_socket.recv(4)
         file_name = client_socket.recv(int.from_bytes(size, 'big'))
@@ -30,6 +29,19 @@ def created(numFolder, client_socket):
             f.write(info)
             file_size -= len(info)
         f.close()
+
+
+def moved(num_folder, client_socket):
+    size = client_socket.recv(4)
+    dir_name = client_socket.recv(int.from_bytes(size, 'big'))
+    src_path = os.path.join(os.getcwd(), str(num_folder))
+    dst_path = src_path
+    src_path = os.path.join(src_path, dir_name.decode())
+    size = client_socket.recv(4)
+    dir_name = client_socket.recv(int.from_bytes(size, 'big'))
+    dst_path = os.path.join(dst_path, dir_name.decode())
+    if os.path.isdir(src_path):
+        os.renames(src_path, dst_path)
 
 
 if __name__ == '__main__':
@@ -64,4 +76,6 @@ if __name__ == '__main__':
             upd_type = client_socket.recv(int.from_bytes(size, 'big'))
             if upd_type == b'created':
                 created(numFolder, client_socket)
+            elif upd_type == b'renamed':
+                moved(numFolder, client_socket)
         client_socket.close()
