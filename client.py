@@ -6,7 +6,9 @@ import time
 import logging
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
+
 myId = b''
+mySubId = b''
 
 
 def on_created(event):
@@ -89,6 +91,7 @@ def on_moved(event):
     else:
         print("rename dir file dont change")
 
+
 if __name__ == "__main__":
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((sys.argv[1], int(sys.argv[2])))
@@ -97,11 +100,13 @@ if __name__ == "__main__":
         myId = sys.argv[5]
         s.send(b'old')
         s.send(myId.encode())
+        mySubId = s.recv(4)
         util.getFolder(s, sys.argv[3])
     # get my id
     else:
         s.send(b'new')
         myId = s.recv(128)
+        mySubId = s.recv(4)
         util.sendFolder(s, sys.argv[3])
     s.close()
 
@@ -121,7 +126,7 @@ if __name__ == "__main__":
 
     try:
         while True:
-            time.sleep(1)
+            time.sleep(int(sys.argv[4]))
     finally:
         observer.stop()
         observer.join()

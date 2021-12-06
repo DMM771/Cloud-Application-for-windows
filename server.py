@@ -35,7 +35,7 @@ def deleted(num_folder, client_socket):
     size = client_socket.recv(4)
     dir_name = client_socket.recv(int.from_bytes(size, 'big'))
     src_path = os.path.join(os.getcwd(), str(num_folder))
-    util.delete(os.path.join(src_path,dir_name.decode()))
+    util.delete(os.path.join(src_path, dir_name.decode()))
 
 
 def moved(num_folder, client_socket):
@@ -55,30 +55,34 @@ if __name__ == '__main__':
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(('', int(sys.argv[1])))
     server.listen(5)
-    numClient = 0
-    dic = {}
+    id_list = []
+    sub_id = {}
+    upt_list = []
     while True:
         client_socket, client_address = server.accept()
         print('connect')
         data = client_socket.recv(3)
         if data == b'old':
             data = client_socket.recv(128)
-            numFolder = dic[data.decode()]
+            numFolder = id_list.index(data.decode())
             print(numFolder)
+            sub_id[data.decode()] += 1
+            client_socket.send(sub_id[data.decode()].to_bytes(4,'big'))
             util.sendFolder(client_socket, os.path.join(os.getcwd(), str(numFolder)))
         elif data == b'new':
             id = ''.join(random.choices(string.ascii_letters + string.digits, k=128))
-            numClient += 1
-            dic[id] = numClient
+            id_list.append(id)
+            sub_id[id] = 0
             client_socket.send(bytes(id, encoding='utf8'))
             print('send id:', id)
-            dirName = os.path.join(os.getcwd(), str(dic[id]))
+            client_socket.send(sub_id[id].to_bytes(4, 'big'))
+            dirName = os.path.join(os.getcwd(), str(id_list.index(id)))
             os.mkdir(dirName)
             print(dirName)
             util.getFolder(client_socket, dirName)
         elif data == b'upd':
             data = client_socket.recv(128)
-            numFolder = dic[data.decode()]
+            numFolder = id_list.index(data.decode())
             size = client_socket.recv(4)
             upd_type = client_socket.recv(int.from_bytes(size, 'big'))
             if upd_type == b'created':
