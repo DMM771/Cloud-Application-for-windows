@@ -31,6 +31,13 @@ def created(numFolder, client_socket):
         f.close()
 
 
+def deleted(num_folder, client_socket):
+    size = client_socket.recv(4)
+    dir_name = client_socket.recv(int.from_bytes(size, 'big'))
+    src_path = os.path.join(os.getcwd(), str(num_folder))
+    util.delete(os.path.join(src_path,dir_name.decode()))
+
+
 def moved(num_folder, client_socket):
     size = client_socket.recv(4)
     dir_name = client_socket.recv(int.from_bytes(size, 'big'))
@@ -78,4 +85,6 @@ if __name__ == '__main__':
                 created(numFolder, client_socket)
             elif upd_type == b'renamed':
                 moved(numFolder, client_socket)
+            elif upd_type == b'deleted':
+                deleted(numFolder, client_socket)
         client_socket.close()

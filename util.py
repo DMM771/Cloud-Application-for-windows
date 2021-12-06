@@ -2,6 +2,18 @@ import os
 import sys
 
 
+def delete(path):
+    if os.path.isdir(path):
+        for path, dirs, files in os.walk(path, topdown=False):
+            for file in files:
+                os.remove(file)
+            for dir in dirs:
+                os.rmdir(dir)
+        os.rmdir(path)
+    else:
+        os.remove(path)
+
+
 def getFolder(sock, dir):
     print("in getFolder")
     size = sock.recv(4)
