@@ -44,11 +44,26 @@ def on_created(event):
 
 def on_deleted(event):
     print("a file has been deleted")
+    print('the change happened in ' + event.src_path)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((sys.argv[1], int(sys.argv[2])))
+    sock.send(b'upd')
+    sock.send(myId)
+    sock.send(len('deleted').to_bytes(4, 'big'))
+    sock.send('deleted'.encode())
+    updated_path = os.path.relpath(event.src_path, sys.argv[3])
+    print(updated_path)
+    sock.send(len(updated_path).to_bytes(4, 'big'))
+    sock.send(updated_path.encode())
 
 
 def on_modified(event):
     if not event.is_directory:
         on_created(event)
+    elif not os.path.isdir(event.src_path):
+        print("lest call delete")
+        on_deleted(event)
+
     else:
         print("dir, do nothing")
 
