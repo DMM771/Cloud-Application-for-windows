@@ -17,6 +17,7 @@ def is_upt(event):
     event_str = event.event_type + event.src_path
     global updates
     if event_str in updates:
+        updates.remove(event_str)
         return True
     return False
 
