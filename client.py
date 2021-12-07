@@ -10,11 +10,19 @@ from watchdog.events import LoggingEventHandler
 myId = b''
 mySubId = b''
 flag = False
+updates = []
+
+
+def is_upt(event):
+    event_str = event.event_type + event.src_path
+    global updates
+    if event_str in updates:
+        return True
+    return False
 
 
 def on_created(event):
-    global flag
-    if flag:
+    if is_upt(event):
         return
     print("a file has been created")
     print('the change happened in ' + event.src_path)
@@ -50,8 +58,7 @@ def on_created(event):
 
 
 def on_deleted(event):
-    global flag
-    if flag:
+    if is_upt(event):
         return
     print("a file has been deleted")
     print('the change happened in ' + event.src_path)
@@ -69,9 +76,6 @@ def on_deleted(event):
 
 
 def on_modified(event):
-    global flag
-    if flag:
-        return
     if not event.is_directory:
         on_created(event)
     elif not os.path.isdir(event.src_path):
@@ -83,8 +87,7 @@ def on_modified(event):
 
 
 def on_moved(event):
-    global flag
-    if flag:
+    if is_upt(event):
         return
     if event.is_directory:
         print("a dir has been renamed")
@@ -124,6 +127,8 @@ def receive_update():
             src = os.path.join(sys.argv[3], soc.recv(size).decode())
             size = int.from_bytes(soc.recv(4), 'big')
             dst = os.path.join(sys.argv[3], soc.recv(size).decode())
+            global updates
+            updates.append('moved' + src)
             if os.path.isdir(src):
                 os.renames(src, dst)
 
@@ -132,6 +137,8 @@ def receive_update():
             crea_type = soc.recv(size).decode()
             size = int.from_bytes(soc.recv(4), 'big')
             src = os.path.join(sys.argv[3], soc.recv(size).decode())
+            global updates
+            updates.append('created' + src)
             if crea_type == 'dir':
                 os.mkdir(src)
             else:
@@ -146,6 +153,8 @@ def receive_update():
         elif event_type == 'dele':
             size = int.from_bytes(soc.recv(4), 'big')
             src = os.path.join(sys.argv[3], soc.recv(size).decode())
+            global updates
+            updates.append('deleted' + src)
             util.delete(src)
     flag = False
 
