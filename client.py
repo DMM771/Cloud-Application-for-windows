@@ -10,7 +10,6 @@ from watchdog.events import LoggingEventHandler
 myId = b''
 mySubId = b''
 
-
 def on_created(event):
     print("a file has been created")
     print('the change happened in ' + event.src_path)
@@ -20,6 +19,7 @@ def on_created(event):
     sock.send(myId)
     sock.send(len('created').to_bytes(4, 'big'))
     sock.send('created'.encode())
+    sock.send(mySubId)
     updated_path = os.path.relpath(event.src_path, sys.argv[3])
     print(updated_path)
     if event.is_directory:
@@ -53,6 +53,7 @@ def on_deleted(event):
     sock.send(myId)
     sock.send(len('deleted').to_bytes(4, 'big'))
     sock.send('deleted'.encode())
+    sock.send(mySubId)
     updated_path = os.path.relpath(event.src_path, sys.argv[3])
     print(updated_path)
     sock.send(len(updated_path).to_bytes(4, 'big'))
@@ -80,6 +81,7 @@ def on_moved(event):
         sock.send(myId)
         sock.send(len('renamed').to_bytes(4, 'big'))
         sock.send('renamed'.encode())
+        sock.send(mySubId)
         updated_path = os.path.relpath(event.src_path, sys.argv[3])
         print(updated_path)
         sock.send(len(updated_path).to_bytes(4, 'big'))
@@ -94,6 +96,7 @@ def on_moved(event):
 
 if __name__ == "__main__":
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
     s.connect((sys.argv[1], int(sys.argv[2])))
     if len(sys.argv) == 6:
         print("here")
