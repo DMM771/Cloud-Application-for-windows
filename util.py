@@ -1,14 +1,14 @@
 import os
-import sys
 
 
 def delete(path):
     if os.path.isdir(path):
         for path, dirs, files in os.walk(path, topdown=False):
             for file in files:
-                os.remove(file)
+                print(file)
+                os.remove(os.path.join(path, file))
             for dir in dirs:
-                os.rmdir(dir)
+                os.rmdir(os.path.join(path, dir))
         os.rmdir(path)
     else:
         os.remove(path)
