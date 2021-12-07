@@ -9,8 +9,13 @@ from watchdog.events import LoggingEventHandler
 
 myId = b''
 mySubId = b''
+flag = False
+
 
 def on_created(event):
+    global flag
+    if flag:
+        return
     print("a file has been created")
     print('the change happened in ' + event.src_path)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -45,6 +50,9 @@ def on_created(event):
 
 
 def on_deleted(event):
+    global flag
+    if flag:
+        return
     print("a file has been deleted")
     print('the change happened in ' + event.src_path)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -61,6 +69,9 @@ def on_deleted(event):
 
 
 def on_modified(event):
+    global flag
+    if flag:
+        return
     if not event.is_directory:
         on_created(event)
     elif not os.path.isdir(event.src_path):
@@ -72,6 +83,9 @@ def on_modified(event):
 
 
 def on_moved(event):
+    global flag
+    if flag:
+        return
     if event.is_directory:
         print("a dir has been renamed")
         print('the change happened in ' + event.src_path)
@@ -94,15 +108,57 @@ def on_moved(event):
         print("rename dir file dont change")
 
 
+def receive_update():
+    global flag
+    flag = True
+    soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    soc.connect((sys.argv[1], int(sys.argv[2])))
+    soc.send(b'get')
+    soc.send(myId)
+    soc.send(mySubId)
+    events_amount = int.from_bytes(soc.recv(4), 'big')
+    for i in range(0, events_amount):
+        event_type = soc.recv(4).decode()
+        if event_type == 'move':
+            size = int.from_bytes(soc.recv(4), 'big')
+            src = os.path.join(sys.argv[3], soc.recv(size).decode())
+            size = int.from_bytes(soc.recv(4), 'big')
+            dst = os.path.join(sys.argv[3], soc.recv(size).decode())
+            if os.path.isdir(src):
+                os.renames(src, dst)
+
+        elif event_type == 'crea':
+            size = int.from_bytes(soc.recv(4), 'big')
+            crea_type = soc.recv(size).decode()
+            size = int.from_bytes(soc.recv(4), 'big')
+            src = os.path.join(sys.argv[3], soc.recv(size).decode())
+            if crea_type == 'dir':
+                os.mkdir(src)
+            else:
+                size = int.from_bytes(soc.recv(4), 'big')
+                f = open(src, 'wb')
+                while size > 0:
+                    info = soc.recv(min(1000000, size))
+                    f.write(info)
+                    size -= len(info)
+                f.close()
+
+        elif event_type == 'dele':
+            size = int.from_bytes(soc.recv(4), 'big')
+            src = os.path.join(sys.argv[3], soc.recv(size).decode())
+            util.delete(src)
+    flag = False
+
+
 if __name__ == "__main__":
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     s.connect((sys.argv[1], int(sys.argv[2])))
     if len(sys.argv) == 6:
         print("here")
-        myId = sys.argv[5]
+        myId = sys.argv[5].encode()
         s.send(b'old')
-        s.send(myId.encode())
+        s.send(myId)
         mySubId = s.recv(4)
         util.getFolder(s, sys.argv[3])
     # get my id
@@ -130,6 +186,8 @@ if __name__ == "__main__":
     try:
         while True:
             time.sleep(int(sys.argv[4]))
+            receive_update()
+
     finally:
         observer.stop()
         observer.join()
