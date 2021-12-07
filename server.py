@@ -21,6 +21,7 @@ def created(numFolder, client_socket, dict):
     size = client_socket.recv(4)
     type = client_socket.recv(int.from_bytes(size, 'big'))
     name = ''
+    kind = 'dir'
     if type == b'directory':
         size = client_socket.recv(4)
         name = client_socket.recv(int.from_bytes(size, 'big'))
@@ -30,6 +31,7 @@ def created(numFolder, client_socket, dict):
             os.makedirs(os.path.join(path, name.decode()))
             print("copied folder")
     else:
+        kind = 'file'
         size = client_socket.recv(4)
         name = client_socket.recv(int.from_bytes(size, 'big'))
         path = os.path.join(os.getcwd(), str(numFolder))
@@ -41,7 +43,8 @@ def created(numFolder, client_socket, dict):
             f.write(info)
             file_size -= len(info)
         f.close()
-    addEvent('created', name.decode(), '', dict, subid)
+
+    addEvent('created', name.decode(), kind, dict, subid)
 
 
 def deleted(num_folder, client_socket, dict):
@@ -68,6 +71,51 @@ def moved(num_folder, client_socket, dict):
     addEvent('moved', src_name.decode(), dst_name.decode(), dict, subid)
 
 
+def send_moved(client_socket, src, dst):
+    client_socket.send(b'move')
+    client_socket.send(len(src).to_bytes(4, 'big'))
+    client_socket.send(src.encode())
+    client_socket.send(len(dst).to_bytes(4, 'big'))
+    client_socket.send(dst.encode())
+
+
+def send_created(client_socket, path, type, num_folder):
+    client_socket.send(b'crea')
+    client_socket.send(len(type).to_bytes(4, 'big'))
+    client_socket.send(type.encode())
+    client_socket.send(len(path).to_bytes(4, 'big'))
+    client_socket.send(path.encode())
+    file = os.path.join(os.getcwd(), str(num_folder))
+    file = os.path.join(file, path)
+    client_socket.send(os.path.getsize(file).to_bytes(4, 'big'))
+    if type == 'file':
+        with open(file) as f:
+            while True:
+                data = f.read(1_000_000)
+                if not data:
+                    break
+                client_socket.send(data)
+            f.close()
+
+
+def send_deleted(client_socket, path):
+    client_socket.send(b'dele')
+    client_socket.send(len(path).to_bytes(4, 'big'))
+    client_socket.send(path.encode())
+
+
+def send_update(num_folder, client_socket, events):
+    client_socket.send(len(events).to_bytes(4, 'big'))
+    for event in events:
+        update = event.split('###')
+        if update[0] == 'moved':
+            send_moved(client_socket, update[1], update[2])
+        elif update[0] == 'deleted':
+            send_deleted(client_socket, update[1])
+        else:
+            send_created(client_socket, update[1], update[2], num_folder)
+
+
 if __name__ == '__main__':
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(('', int(sys.argv[1])))
@@ -88,7 +136,9 @@ if __name__ == '__main__':
             client_socket.send((len(id_list[data.decode()])).to_bytes(4, 'big'))
             util.sendFolder(client_socket, os.path.join(os.getcwd(), str(numFolder)))
         elif data == b'new':
-            id = ''.join(random.choices(string.ascii_letters + string.digits, k=128))
+            # id = ''.join(random.choices(string.ascii_letters + string.digits, k=128))
+
+            id = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
             id_list[id] = {}
             id_to_num[id] = num_client
             num_client += 1
@@ -111,4 +161,9 @@ if __name__ == '__main__':
                 moved(numFolder, client_socket, id_list[data.decode()])
             elif upd_type == b'deleted':
                 deleted(numFolder, client_socket, id_list[data.decode()])
+        elif data == b'get':
+            data = client_socket.recv(128)
+            numFolder = id_to_num[data.decode()]
+            subid = client_socket.recv(4)
+            send_update(numFolder, client_socket, id_list[data.decode()][int.from_bytes(subid, 'big')])
         client_socket.close()
