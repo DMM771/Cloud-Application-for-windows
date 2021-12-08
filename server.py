@@ -114,6 +114,7 @@ def send_update(num_folder, client_socket, events):
             send_created(client_socket, update[1], update[2], num_folder)
     events.clear()
 
+
 if __name__ == '__main__':
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(('', int(sys.argv[1])))

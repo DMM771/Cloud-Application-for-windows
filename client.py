@@ -9,7 +9,6 @@ from watchdog.events import LoggingEventHandler
 
 myId = b''
 mySubId = b''
-flag = False
 updates = []
 
 
@@ -75,7 +74,6 @@ def on_modified(event):
         on_created(event)
     elif not os.path.isdir(event.src_path):
         on_deleted(event)
-
 
 
 def on_moved(event):

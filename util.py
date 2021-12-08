@@ -1,7 +1,6 @@
 import os
 
 
-
 def delete(path):
     if os.path.isdir(path):
         for path, dirs, files in os.walk(path, topdown=False):
