@@ -206,7 +206,7 @@ def receive_update():
             # append to list of events, and delete
             updates.append('deleted' + src)
             utils.delete(src)
-
+    soc.close()
 
 # function name: main
 if __name__ == "__main__":
