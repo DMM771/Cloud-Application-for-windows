@@ -11,7 +11,7 @@ def addEvent(type, src, dst, sub_dict, num_sub):
     if dst != '':
         event = event + '###' + dst
     for key in sub_dict.keys():
-        if key == num_sub:
+        if key == int.from_bytes(num_sub, 'big'):
             continue
         sub_dict[key].append(event)
 
