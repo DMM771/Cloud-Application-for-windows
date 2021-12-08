@@ -165,6 +165,8 @@ if __name__ == "__main__":
 
     s.connect((sys.argv[1], int(sys.argv[2])))
     if len(sys.argv) == 6:
+        if not os.path.isdir(sys.argv[3]):
+            os.mkdir(sys.argv[3])
         print("here")
         myId = sys.argv[5].encode()
         s.send(b'old')
