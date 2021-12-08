@@ -6,10 +6,18 @@ import sys
 import util
 
 
+# add the event that get from the client to the list of update to send of all other client with the same id
+# Parm type: is type of event
+# Parm src: is the relative path of the event
+# Parm dst: is optional for move event is the dst location and for create event is the type sile or directory
+# Parm sub_dict: is the dictionary of all updates list to this id
+# Parm num_sub :is the sub_num of the client that send the event
 def addEvent(type, src, dst, sub_dict, num_sub):
+    # create the string that represent eupdate
     event = type + '###' + src
     if dst != '':
         event = event + '###' + dst
+    #
     for key in sub_dict.keys():
         if key == int.from_bytes(num_sub, 'big'):
             continue
