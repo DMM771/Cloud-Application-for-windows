@@ -231,9 +231,9 @@ if __name__ == '__main__':
             client_socket.send(id.encode())
             print(id)
             client_socket.send((1).to_bytes(4, 'big'))
-            # get from client the data to backup
             dirName = os.path.join(os.getcwd(), str(id_to_num[id]))
             os.mkdir(dirName)
+            utils.getFolder(client_socket,dirName)
         # the client send update
         elif data == b'upd':
             # get client id
