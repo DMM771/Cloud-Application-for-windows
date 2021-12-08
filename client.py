@@ -97,8 +97,6 @@ def on_moved(event):
 
 
 def receive_update():
-    global flag
-    flag = True
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soc.connect((sys.argv[1], int(sys.argv[2])))
     soc.send(b'get')
@@ -141,7 +139,6 @@ def receive_update():
             global updates
             updates.append('deleted' + src)
             util.delete(src)
-    flag = False
 
 
 if __name__ == "__main__":
