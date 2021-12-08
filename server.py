@@ -3,7 +3,7 @@ import socket
 import random
 import string
 import sys
-import util
+import utils
 
 
 # Function name: addEvent
@@ -83,7 +83,7 @@ def deleted(num_folder, client_socket, dict):
     # get the absolut path
     src_path = os.path.join(os.getcwd(), str(num_folder))
     # send the path to deleted
-    util.delete(os.path.join(src_path, name.decode()))
+    utils.delete(os.path.join(src_path, name.decode()))
     # add the event to the updates lists
     addEvent('deleted', name.decode(), '', dict, subid)
 
@@ -218,7 +218,7 @@ if __name__ == '__main__':
             id_list[data.decode()][len(id_list[data.decode()]) + 1] = []
             client_socket.send((len(id_list[data.decode()])).to_bytes(4, 'big'))
             # send the backup
-            util.sendFolder(client_socket, os.path.join(os.getcwd(), str(numFolder)))
+            utils.sendFolder(client_socket, os.path.join(os.getcwd(), str(numFolder)))
         # new client
         elif data == b'new':
             # rand new id

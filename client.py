@@ -1,7 +1,7 @@
 import os
 import socket
 import sys
-import util
+import utils
 import time
 import logging
 from watchdog.observers import Observer
@@ -11,6 +11,7 @@ myId = b''
 mySubId = b''
 updates = []
 
+
 # function name: is_upt
 # function operation: check if event origin is from previous update
 # Param event: the event to check
@@ -19,11 +20,12 @@ def is_upt(event):
     global updates
     # iterate through list of latest events and check if exists, if yes, remove from list and skip
     for str in updates:
-       if event_str == str:
+        if event_str == str:
             updates.remove(event_str)
             return True
     # if got here, return false
     return False
+
 
 # function name: on_created
 # function operation: take action upon creation event
@@ -95,6 +97,7 @@ def on_deleted(event):
     sock.send(len(updated_path).to_bytes(4, 'big'))
     sock.send(updated_path.encode())
 
+
 # function name: on_modified
 # function operation: take action upon modification event
 # Param event: the event to check
@@ -106,6 +109,7 @@ def on_modified(event):
     elif not os.path.isdir(event.src_path):
         on_deleted(event)
     # if got here, ignore
+
 
 # function name: on_moved
 # function operation: take action upon moved event
@@ -134,6 +138,7 @@ def on_moved(event):
         updated_path = os.path.relpath(event.dest_path, sys.argv[3])
         sock.send(len(updated_path).to_bytes(4, 'big'))
         sock.send(updated_path.encode())
+
 
 # function name: receive_update
 # function operation: check and receive new updates from server
@@ -202,7 +207,8 @@ def receive_update():
             global updates
             # append to list of events, and delete
             updates.append('deleted' + src)
-            util.delete(src)
+            utils.delete(src)
+
 
 # function name: main
 if __name__ == "__main__":
@@ -220,7 +226,7 @@ if __name__ == "__main__":
         s.send(myId)
         # receive sub id, and get folders
         mySubId = s.recv(4)
-        util.getFolder(s, sys.argv[3])
+        utils.getFolder(s, sys.argv[3])
         # else, must be new user, get id and sub id, and upload folders
     else:
         # prepare server for old user
@@ -230,7 +236,7 @@ if __name__ == "__main__":
         # get new sub id
         mySubId = s.recv(4)
         # upload folders
-        util.sendFolder(s, sys.argv[3])
+        utils.sendFolder(s, sys.argv[3])
         # done
     s.close()
 
