@@ -25,8 +25,6 @@ def is_upt(event):
 def on_created(event):
     if is_upt(event):
         return
-    print("a file has been created")
-    print('the change happened in ' + event.src_path)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((sys.argv[1], int(sys.argv[2])))
     sock.send(b'upd')
@@ -35,7 +33,6 @@ def on_created(event):
     sock.send('created'.encode())
     sock.send(mySubId)
     updated_path = os.path.relpath(event.src_path, sys.argv[3])
-    print(updated_path)
     if event.is_directory:
         sock.send(len('directory').to_bytes(4, 'big'))
         sock.send('directory'.encode())
@@ -61,8 +58,6 @@ def on_created(event):
 def on_deleted(event):
     if is_upt(event):
         return
-    print("a file has been deleted")
-    print('the change happened in ' + event.src_path)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((sys.argv[1], int(sys.argv[2])))
     sock.send(b'upd')
@@ -71,7 +66,6 @@ def on_deleted(event):
     sock.send('deleted'.encode())
     sock.send(mySubId)
     updated_path = os.path.relpath(event.src_path, sys.argv[3])
-    print(updated_path)
     sock.send(len(updated_path).to_bytes(4, 'big'))
     sock.send(updated_path.encode())
 
@@ -80,19 +74,14 @@ def on_modified(event):
     if not event.is_directory:
         on_created(event)
     elif not os.path.isdir(event.src_path):
-        print("lest call delete")
         on_deleted(event)
 
-    else:
-        print("dir, do nothing")
 
 
 def on_moved(event):
     if is_upt(event):
         return
     if event.is_directory:
-        print("a dir has been renamed")
-        print('the change happened in ' + event.src_path)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((sys.argv[1], int(sys.argv[2])))
         sock.send(b'upd')
@@ -101,15 +90,11 @@ def on_moved(event):
         sock.send('renamed'.encode())
         sock.send(mySubId)
         updated_path = os.path.relpath(event.src_path, sys.argv[3])
-        print(updated_path)
         sock.send(len(updated_path).to_bytes(4, 'big'))
         sock.send(updated_path.encode())
         updated_path = os.path.relpath(event.dest_path, sys.argv[3])
-        print(updated_path)
         sock.send(len(updated_path).to_bytes(4, 'big'))
         sock.send(updated_path.encode())
-    else:
-        print("rename dir file dont change")
 
 
 def receive_update():
@@ -167,7 +152,6 @@ if __name__ == "__main__":
     if len(sys.argv) == 6:
         if not os.path.isdir(sys.argv[3]):
             os.mkdir(sys.argv[3])
-        print("here")
         myId = sys.argv[5].encode()
         s.send(b'old')
         s.send(myId)

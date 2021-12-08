@@ -26,10 +26,8 @@ def created(numFolder, client_socket, dict):
         size = client_socket.recv(4)
         name = client_socket.recv(int.from_bytes(size, 'big'))
         path = os.path.join(os.getcwd(), str(numFolder))
-        print(os.path.join(path, name.decode()))
         if not os.path.isdir(os.path.join(path, name.decode())):
             os.makedirs(os.path.join(path, name.decode()))
-            print("copied folder")
     else:
         kind = 'file'
         size = client_socket.recv(4)
@@ -124,32 +122,25 @@ if __name__ == '__main__':
     id_to_num = {}
     num_client = 0
     while True:
-        print('wait')
         client_socket, client_address = server.accept()
-        print('connect')
         data = client_socket.recv(3)
         if data == b'old':
             data = client_socket.recv(128)
             numFolder = id_to_num[data.decode()]
-            print(numFolder)
             id_list[data.decode()][len(id_list[data.decode()]) + 1] = []
             client_socket.send((len(id_list[data.decode()])).to_bytes(4, 'big'))
             util.sendFolder(client_socket, os.path.join(os.getcwd(), str(numFolder)))
         elif data == b'new':
-            # id = ''.join(random.choices(string.ascii_letters + string.digits, k=128))
-
-            id = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+            id = ''.join(random.choices(string.ascii_letters + string.digits, k=128))
             id_list[id] = {}
             id_to_num[id] = num_client
             num_client += 1
             id_list[id][1] = []
             client_socket.send(id.encode())
-            print('send id:', id)
+            print(id)
             client_socket.send((1).to_bytes(4, 'big'))
             dirName = os.path.join(os.getcwd(), str(id_to_num[id]))
             os.mkdir(dirName)
-            print(dirName)
-            util.getFolder(client_socket, dirName)
         elif data == b'upd':
             data = client_socket.recv(128)
             numFolder = id_to_num[data.decode()]
