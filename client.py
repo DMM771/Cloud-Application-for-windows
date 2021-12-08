@@ -31,6 +31,8 @@ def is_upt(event):
 # function operation: take action upon creation event
 # Param event: the event to check
 def on_created(event):
+    # ask for updates
+    receive_update()
     # check if event came from previous update, if yes, skip
     if is_upt(event):
         return
@@ -78,6 +80,8 @@ def on_created(event):
 # function operation: take action upon deletion event
 # Param event: the event to check
 def on_deleted(event):
+    # ask for updates
+    receive_update()
     # check if event came from previous update, if yes, skip
     if is_upt(event):
         return
@@ -115,6 +119,8 @@ def on_modified(event):
 # function operation: take action upon moved event
 # Param event: the event to check
 def on_moved(event):
+    # ask for updates
+    receive_update()
     # check if event came from previous update, if yes, skip
     if is_upt(event):
         return
