@@ -181,7 +181,6 @@ def receive_update():
             # get src path
             size = int.from_bytes(soc.recv(4), 'big')
             src = os.path.join(sys.argv[3], soc.recv(size).decode())
-            global updates
             # append to list of events
             updates.append('created' + src)
             # check if event is a directory, if yes create
@@ -204,7 +203,6 @@ def receive_update():
             size = int.from_bytes(soc.recv(4), 'big')
             # get src path
             src = os.path.join(sys.argv[3], soc.recv(size).decode())
-            global updates
             # append to list of events, and delete
             updates.append('deleted' + src)
             utils.delete(src)
